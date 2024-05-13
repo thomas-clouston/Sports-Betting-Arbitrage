@@ -9,6 +9,9 @@ today_date = str(date.today())
 bonus_bet_amount = float(input('Please set your bonus bet amount: '))
 max_days = int(input('Please select the max amount of days to search: '))
 min_profit = int(input('Please enter the minimum percentage of profit: '))
+bookie_filter = input('Please enter the bookie: ')
+max_liability = int(input('Please enter the maximum liability: '))
+
 
 sports = requests.get(f'https://api.the-odds-api.com/v4/sports/?apiKey={key}')
 sports = sports.json()
@@ -27,8 +30,10 @@ for sport in sports:
     for sports in odds:
         head1_prices_list = []
         head2_prices_list = []
-        head1_betfair_prices_list = []
-        head2_betfair_prices_list = []
+        draw_prices_list = []
+        betfair_head1_prices_list = []
+        betfair_head2_prices_list = []
+        betfair_draw_prices_list = []
 
         sport = sports['sport_key']
         head1_name = sports['away_team']
@@ -63,51 +68,88 @@ for sport in sports:
                             prices_temp_list.append(price)
 
                     if len(betfair_prices_temp_list) != 0:
-                        head1_betfair_prices_list.extend((betfair_prices_temp_list[0], bookie))
-                        head2_betfair_prices_list.extend((betfair_prices_temp_list[1], bookie))
+                        # If there are draw prices
+                        if len(betfair_prices_temp_list) == 3:
+                            betfair_draw_prices_list.extend((betfair_prices_temp_list[2], bookie))
+                        betfair_head1_prices_list.extend((betfair_prices_temp_list[1], bookie))
+                        betfair_head2_prices_list.extend((betfair_prices_temp_list[0], bookie))
+
                     else:
-                        head1_prices_list.extend((prices_temp_list[0], bookie))
-                        head2_prices_list.extend((prices_temp_list[1], bookie))
+                        if len(prices_temp_list) == 3:
+                            draw_prices_list.extend((prices_temp_list[2], bookie))
+                        head1_prices_list.extend((prices_temp_list[1], bookie))
+                        head2_prices_list.extend((prices_temp_list[0], bookie))
 
             # Head 1
             # Finding lay price
-            if len(head1_betfair_prices_list) != 0:
-                lay_price = head1_betfair_prices_list[2]
+            if len(betfair_head1_prices_list) != 0:
+                lay_price = betfair_head1_prices_list[2]
+                name = head1_name + ' vs ' + head2_name
 
                 # Finding Arbitrage
                 for iteration in range(2, len(head1_prices_list), 2):
                     # Calculations
                     price = head1_prices_list[iteration - 2]
                     bookmaker = head1_prices_list[iteration - 1]
-                    strategy = ((price - 1) / lay_price) * bonus_bet_amount
-                    liability = (lay_price * strategy) - strategy
 
-                    if strategy > (min_profit / 100) * bonus_bet_amount:
-                        print('Sport:', sport, '\n', 'Days:', days, '\n', 'Team:', head1_name, '\n', 'Bookmaker 1:',
-                              bookmaker, '\n', 'Price:', price, '\n', 'Bookmaker 2: Betfair', '\n',
-                              'Price:',
-                              lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
-                              'Betfair Strategy:', strategy,
-                              '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
+                    if bookmaker == bookie_filter:
+                        strategy = ((price - 1) / lay_price) * bonus_bet_amount
+                        liability = (lay_price * strategy) - strategy
+
+                        if liability < max_liability:
+                            if strategy > (min_profit / 100) * bonus_bet_amount:
+                                print('Sport:', sport, '\n', 'Days:', days, '\n', 'Game:', name, '\n', 'Bookmaker 1:',
+                                      bookmaker, '\n', 'Price:', price, '\n', 'Betfair:', '\n',
+                                      'Price:',
+                                      lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
+                                      'Backers Stake:', strategy,
+                                      '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
 
             # Head 2
-            # Finding lay price
-            if len(head2_betfair_prices_list) != 0:
-                lay_price = head2_betfair_prices_list[2]
+            if len(betfair_head2_prices_list) != 0:
+                lay_price = betfair_head2_prices_list[2]
+                name = head1_name + ' vs ' + head2_name
 
-                # Finding Arbitrage
                 for iteration in range(2, len(head2_prices_list), 2):
-                    # Calculations
                     price = head2_prices_list[iteration - 2]
                     bookmaker = head2_prices_list[iteration - 1]
-                    strategy = ((price - 1) / lay_price) * bonus_bet_amount
-                    liability = (lay_price * strategy) - strategy
 
-                    if strategy > (min_profit / 100) * bonus_bet_amount:
-                        print('Sport:', sport, '\n', 'Days:', days, '\n', 'Team:', head2_name, '\n',
-                              'Bookmaker 1:',
-                              bookmaker, '\n', 'Price:', price, '\n', 'Bookmaker 2: Betfair', '\n',
-                              'Price:',
+                    if bookmaker == bookie_filter:
+                        strategy = ((price - 1) / lay_price) * bonus_bet_amount
+                        liability = (lay_price * strategy) - strategy
+
+                        if liability < max_liability:
+                            if strategy > (min_profit / 100) * bonus_bet_amount:
+                                print('Sport:', sport, '\n', 'Days:', days, '\n', 'Game:', name, '\n',
+                                      'Bookmaker 1:',
+                                      bookmaker, '\n', 'Price:', price, '\n', 'Betfair:', '\n',
+                                      'Price:',
+                                      lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
+                                      'Backers Stake:', strategy,
+                                      '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
+
+            # Draw
+            if len(betfair_draw_prices_list) != 0:
+                lay_price = betfair_draw_prices_list[2]
+                name = head1_name + ' vs ' + head2_name + ' Draw'
+
+                for iteration in range(2, len(draw_prices_list), 2):
+                    price = draw_prices_list[iteration - 2]
+                    bookmaker = draw_prices_list[iteration - 1]
+
+                    if bookmaker == bookie_filter:
+                        strategy = ((price - 1) / lay_price) * bonus_bet_amount
+                        liability = (lay_price * strategy) - strategy
+
+                        if liability < max_liability:
+                            if strategy > (min_profit / 100) * bonus_bet_amount:
+                                print('Sport:', sport, '\n', 'Days:', days, '\n', 'Game:', name, '\n',
+                                      'Bookmaker 1:',
+                                      bookmaker, '\n', 'Price:', price, '\n', 'Betfair:', '\n',
+                                      'Price:',
+                                      lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
+                                      'Backers Stake:', strategy,
+                                      '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
                               lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
                               'Betfair Strategy:', strategy,
                               '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
