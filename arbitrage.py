@@ -92,7 +92,7 @@ for sport in sports:
                     price = head1_prices_list[iteration - 2]
                     bookmaker = head1_prices_list[iteration - 1]
 
-                    if bookmaker == bookie_filter:
+                    if bookie_filter == '' or bookmaker == bookie_filter:
                         strategy = ((price - 1) / lay_price) * bonus_bet_amount
                         liability = (lay_price * strategy) - strategy
 
@@ -114,7 +114,7 @@ for sport in sports:
                     price = head2_prices_list[iteration - 2]
                     bookmaker = head2_prices_list[iteration - 1]
 
-                    if bookmaker == bookie_filter:
+                    if bookie_filter == '' or bookmaker == bookie_filter:
                         strategy = ((price - 1) / lay_price) * bonus_bet_amount
                         liability = (lay_price * strategy) - strategy
 
@@ -137,7 +137,7 @@ for sport in sports:
                     price = draw_prices_list[iteration - 2]
                     bookmaker = draw_prices_list[iteration - 1]
 
-                    if bookmaker == bookie_filter:
+                    if bookie_filter == '' or bookmaker == bookie_filter:
                         strategy = ((price - 1) / lay_price) * bonus_bet_amount
                         liability = (lay_price * strategy) - strategy
 
@@ -150,6 +150,3 @@ for sport in sports:
                                       lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
                                       'Backers Stake:', strategy,
                                       '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
-                              lay_price, '\n', bookmaker, 'Strategy:', bonus_bet_amount, '\n',
-                              'Betfair Strategy:', strategy,
-                              '\n', 'Liability:', liability, '\n', 'Profit:', strategy, '\n')
